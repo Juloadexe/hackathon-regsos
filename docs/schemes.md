@@ -24,3 +24,33 @@ flowchart LR
     B -- "Отправляет структурированные<br/>данные и статистику" --> F[API ответ]
     D -- "Используется как<br/>исходный материал" --> G[Входные данные]
 ```
+# схема с использование Elasticsearch
+
+```mermaid
+graph TB
+    subgraph WebBrowser [Веб-браузер]
+        UI[Веб-клиент<br/>React/Vue]
+    end
+    
+    subgraph BackendServer [Бэкенд сервер]
+        API[API слой<br/>Go HTTP сервер]
+        PARSER[Парсер логов]
+    end
+    
+    subgraph ElasticStack [Elastic Stack]
+        ES[Elasticsearch<br/>Хранение и поиск]
+        KIBANA[Kibana<br/>Аналитика - опционально]
+    end
+    
+    subgraph FileSystem [Файловая система]
+        LOGS[Файлы логов<br/>Terraform JSON]
+    end
+    
+    UI -- "HTTP запросы" --> API
+    API -- "JSON ответы" --> UI
+    PARSER -- "Чтение файлов" --> LOGS
+    PARSER -- "Индексация данных" --> ES
+    API -- "Поисковые запросы" --> ES
+    API -- "Получение результатов" --> ES
+    KIBANA -.-> ES
+```
