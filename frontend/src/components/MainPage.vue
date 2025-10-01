@@ -1,14 +1,15 @@
 <template>
     <div class="upploadFile">
-        <input type="file" @change="handleFileChange" :disabled="isUploading">
+        <input id="postFile" type="file" @change="handleFileChange" :disabled="isUploading">
         <button class="sendFile" @click="uploadFile" :disabled="!selectedFile || isUploading">
             {{ isUploading ? 'Загрузка...' : 'Отправить файл' }}
         </button>
     </div>
+    <div class="uploadMessage">{{ message }}</div>
 </template>
 
 <script>
-import { ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import { Logs } from '../store/log';
 
 export default {
@@ -18,6 +19,8 @@ export default {
         const isUploading = ref(false);
         const uploadMessage = ref('');
         const messageClass = ref('');
+        const message = ref('');
+        let input = ref();
 
         logsStore.filter_logs = {
             level: '',
@@ -29,6 +32,9 @@ export default {
             const file = event.target.files[0];
             if (file) {
                 selectedFile.value = file;
+                console.log(selectedFile.value);
+            } else {
+                selectedFile.value = null;
             }
         };
 
@@ -40,19 +46,24 @@ export default {
             try {
                 const result = await logsStore.uploadFile(selectedFile.value);
                 console.log('Результат загрузки:', result);
-
                 selectedFile.value = null;
+                message.value = 'Успешно';
                 event.target.value = '';
-
             } catch (error) {
                 console.error('Ошибка:', error);
+                message.value = 'Ошибка загрузки';
             } finally {
                 isUploading.value = false;
             }
         };
 
+        onMounted(async () => {
+
+        })
+
         return {
             selectedFile,
+            message,
             isUploading,
             uploadMessage,
             messageClass,
@@ -80,6 +91,15 @@ export default {
     background-color: green;
     color: white;
     font-size: 16px;
+    transition: background-color 0.4s;
+}
+
+.sendFile:disabled {
+    background-color: rgba(0, 146, 0, 0.3);
+    cursor: not-allowed;
+}
+.uploadMessage {
+    text-align: center;
 }
 
 
