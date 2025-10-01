@@ -27,7 +27,7 @@
             <input type="date" class="filter__input" v-model="logsStore.filter_logs.until">
             <label class="filter__label">До время</label>
         </div>
-        <button @click="applyFiters">Применить</button>
+        <button id="confButton" @click="applyFiters">Применить</button>
     </div>
     <table class="table">
         <thead>
@@ -259,6 +259,15 @@ export default {
     font-size: 12px;
     top: 0px;
     left: 11px;
+}
+
+#confButton {
+    background-color: green;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
 }
 
 th {
