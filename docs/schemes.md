@@ -60,7 +60,7 @@ graph TB
     PARSER -- "Индексация" --> OS
     API -- "Поисковые запросы" --> OS
     
-    style OS fill:#e6f3ff
+    style OS fill:#aecbff
     style DASH fill:#e6f3ff
 ```
 
