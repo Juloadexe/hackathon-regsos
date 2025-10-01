@@ -20,7 +20,6 @@ export default {
         const uploadMessage = ref('');
         const messageClass = ref('');
         const message = ref('');
-        let input = ref();
 
         logsStore.filter_logs = {
             level: '',
@@ -31,10 +30,18 @@ export default {
         const handleFileChange = (event) => {
             const file = event.target.files[0];
             if (file) {
-                selectedFile.value = file;
-                console.log(selectedFile.value);
+                const name = file.name.split('.');
+                const extension = name[name.length - 1];
+                if (extension !== 'json') {
+                    message.value = 'Неверное расширение файла. Выберете лог с расширением JSON';
+                    return;
+                } else {
+                    selectedFile.value = file;
+                    message.value = '';
+                }
             } else {
                 selectedFile.value = null;
+                message.value = '';
             }
         };
 
@@ -78,7 +85,8 @@ export default {
 
 .upploadFile {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 20px;
     justify-content: center;
     padding: 30px;
     align-items: center;
