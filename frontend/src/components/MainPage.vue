@@ -6,6 +6,60 @@
         </button>
     </div>
     <div class="uploadMessage">{{ message }}</div>
+
+
+    <div class="filter">
+        <div class="filter__wrapper">
+            <select v-model="logsStore.filter_logs.level" class="filter__input">
+                <option value=""></option>
+                <option value="info">info</option>
+                <option value="debug">debug</option>
+                <option value="trace">trace</option>
+                <option value="error">error</option>
+            </select>
+            <label class="filter__label">Тип лога</label>
+        </div>
+        <div class="filter__wrapper">
+            <input type="date" class="filter__input" v-model="logsStore.filter_logs.since">
+            <label class="filter__label">От время</label>
+        </div>
+        <div class="filter__wrapper">
+            <input type="date" class="filter__input" v-model="logsStore.filter_logs.until">
+            <label class="filter__label">До время</label>
+        </div>
+        <button @click="applyFiters">Применить</button>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Уровень</th>
+                <th>Сообщение</th>
+                <th>Module</th>
+                <th>Caller</th>
+                <th>Дата создания</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="value in logsStore.logsData.logs">
+                <td :style="{ color: getColor(value.Level) }">
+                    {{ value.Level }}
+                </td>
+                <td>
+                    {{ value.Message }}
+                </td>
+                <td>
+                    {{ value.Module }}
+                </td>
+                <td>
+                    {{ value.Caller }}
+                </td>
+                <td>
+                    {{ formatTime(value.Timestamp) }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
 </template>
 
 <script>
@@ -23,8 +77,8 @@ export default {
 
         logsStore.filter_logs = {
             level: '',
-            file_name: '',
-            timeStamp: '',
+            since: '',
+            until: '',
         };
 
         const handleFileChange = (event) => {
@@ -65,8 +119,41 @@ export default {
             }
         };
 
-        onMounted(async () => {
+        function applyFiters() {
+            console.log(logsStore.filter_logs);
 
+            logsStore.setFiters(logsStore.filter_logs);
+        }
+
+        function getColor(type) {
+            switch(type) {
+                case 'info':
+                    return 'blue'
+                case 'debug':
+                    return '#FFBF00'
+                case 'trace':
+                    return 'pink'
+                case 'error':
+                    return 'red'
+                default:
+                    return '#afa4a4';
+            }
+        }
+
+        const formatTime = (timestamp) => {
+            const date = new Date(timestamp);
+            return date.toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).replace(',', '');
+        };
+
+        onMounted(async () => {
+           await logsStore.getLogsData();
         })
 
         return {
@@ -76,7 +163,11 @@ export default {
             uploadMessage,
             messageClass,
             handleFileChange,
-            uploadFile
+            uploadFile,
+            logsStore,
+            formatTime,
+            applyFiters,
+            getColor,
         }
     }
 }
@@ -111,6 +202,62 @@ export default {
     text-align: center;
 }
 
+.table {
+    width: 100%;
+    margin-bottom: 20px;
+    border: 1px solid #dddddd;
+    border-collapse: collapse;
+}
+
+.filter {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+.filter__wrapper {
+    position: relative;
+}
+
+.filter__input {
+    padding: 10px;
+    padding-top: 13px;
+    padding-bottom: 5px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    background-color: #ffffff;
+    color: #333;
+    cursor: text;
+    border: 1px solid #000000;
+    transition: background-color 0.3s, color 0.3s;
+    width: 250px;
+    height: 45px;
+    box-sizing: border-box;
+}
+
+.filter__label {
+    position: absolute;
+    font-size: 12px;
+    top: 0px;
+    left: 11px;
+}
+
+th {
+    text-align: center;
+    font-size: 1em;
+    width: 100px;
+    border: 1px solid #dddddd;
+}
+
+td {
+    text-align: center;
+    font-size: 1em;
+    width: 100px;
+    border: 1px solid #dddddd;
+}
 
 .success {
     color: green;

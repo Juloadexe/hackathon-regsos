@@ -10,6 +10,7 @@ export const Logs = defineStore('logs', {
     actions: {
         async uploadFile(file) {
             try {
+                this.clearLogs();
                 const formData = new FormData()
                 formData.append('file', file)
                 const response = await axios.post(`${this.url}/logs`, formData, {
@@ -17,7 +18,7 @@ export const Logs = defineStore('logs', {
                         'Content-Type': 'multipart/form-data'
                     }
                 })
-                
+                this.getLogsData();
                 return response.data
             } catch (error) {
                 console.error('Ошибка загрузки файла:', error)
@@ -26,11 +27,33 @@ export const Logs = defineStore('logs', {
         },
         async getLogsData() {
             try {
-                const response = await axios(`${this.url}/dataLogger`)
+                const response = await axios.get(`${this.url}/logs`, {
+                    params: {
+                        ...this.filter_logs,
+                    }
+                });
                 this.logsData = response.data;
+                
             } catch (error) {
                 console.error('Ошибка получения данных логов:', error)
                 throw error;
+            }
+        },
+
+        async setFiters(filters) {
+            this.filter_logs = {
+                ...this.filter_logs,
+                ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v != null && v !== ''))
+            }
+            await this.getLogsData();
+        },
+        async clearLogs() {
+            try {
+                const response = await axios.post(`${this.url}/clear`);
+                return response;
+            } catch (error) {
+                console.error('Ошибка удаления:', error)
+                // throw error;
             }
         }
     }
