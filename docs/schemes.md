@@ -15,7 +15,7 @@ flowchart LR
 ```mermaid
 flowchart LR
     subgraph Frontend [Веб-клиент]
-        A[React/Vue приложение]
+        A[/Vue приложение]
     end
     
     subgraph Backend [Бэкенд]
@@ -24,7 +24,7 @@ flowchart LR
     end
     
     subgraph Data [Данные]
-        D[Файл логов<br/>plan.json]
+        D[Файл логов<br/>logs.json]
     end
     
     A -- "❶ HTTP запрос<br/>POST /api/upload" --> B
@@ -33,37 +33,33 @@ flowchart LR
     D -- "❹ Парсинг данных" --> C
     C -- "❺ Обработанные данные" --> B
     
-    A -- "Показывает красивые<br/>таблицы и графики" --> E[Пользовательский интерфейс]
+    A -- "Визуализация в виде<br/>таблицы и графики" --> E[Пользовательский интерфейс]
     B -- "Отправляет структурированные<br/>данные и статистику" --> F[API ответ]
     D -- "Используется как<br/>исходный материал" --> G[Входные данные]
 ```
-# Схема с использование Elasticsearch
+#Возможное представление с использованием OpenSearch
 
 ```mermaid
 graph TB
     subgraph WebBrowser [Веб-браузер]
-        UI[Веб-клиент<br/>React/Vue]
+        UI[Vue.js приложение]
     end
     
-    subgraph BackendServer [Бэкенд сервер]
-        API[API слой<br/>Go HTTP сервер]
+    subgraph BackendServer [Бэкенд Go]
+        API[Go API сервер]
         PARSER[Парсер логов]
     end
     
-    subgraph ElasticStack [Elastic Stack]
-        ES[Elasticsearch<br/>Хранение и поиск]
-        KIBANA[Kibana<br/>Аналитика - опционально]
+    subgraph OpenSearchStack [OpenSearch Stack]
+        OS[OpenSearch<br/>Хранение и поиск]
+        DASH[OpenSearch<br/>Dashboards - опционально]
     end
     
-    subgraph FileSystem [Файловая система]
-        LOGS[Файлы логов<br/>Terraform JSON]
-    end
+    UI -- "HTTP REST API" --> API
+    API -- "JSON данные" --> UI
+    PARSER -- "Индексация" --> OS
+    API -- "Поисковые запросы" --> OS
     
-    UI -- "HTTP запросы" --> API
-    API -- "JSON ответы" --> UI
-    PARSER -- "Чтение файлов" --> LOGS
-    PARSER -- "Индексация данных" --> ES
-    API -- "Поисковые запросы" --> ES
-    API -- "Получение результатов" --> ES
-    KIBANA -.-> ES
+    style OS fill:#e6f3ff
+    style DASH fill:#e6f3ff
 ```
