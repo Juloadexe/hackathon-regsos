@@ -359,13 +359,38 @@ func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, `{"error": "Ошибка чтения тела запроса"}`, http.StatusBadRequest)
-		return
+	var body []byte
+	var err error
+
+	// Проверяем Content-Type
+	contentType := r.Header.Get("Content-Type")
+
+	if strings.Contains(contentType, "multipart/form-data") {
+		// Обработка загрузки файла через форму
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			http.Error(w, `{"error": "Ошибка чтения файла"}`, http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		body, err = io.ReadAll(file)
+		if err != nil {
+			http.Error(w, `{"error": "Ошибка чтения содержимого файла"}`, http.StatusBadRequest)
+			return
+		}
+
+		fmt.Printf("Получен файл: %s\n", header.Filename)
+	} else {
+		// Обработка обычного текста/JSON
+		body, err = io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, `{"error": "Ошибка чтения тела запроса"}`, http.StatusBadRequest)
+			return
+		}
 	}
 
-	// Создаем парсер и парсим логи
+	// Дальше твой существующий код для парсинга...
 	parser := NewLogParser()
 
 	// Если это JSON массив, парсим как массив
@@ -385,18 +410,16 @@ func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 
 	result := parser.ParseStream(strings.NewReader(string(body)))
 
-	// Обновляем текущий результат (добавляем к существующему)
+	// Обновляем текущий результат...
 	if currentResult == nil {
 		currentResult = &result
 	} else {
-		// Объединяем с существующими логами
 		currentResult.Logs = append(currentResult.Logs, result.Logs...)
 		currentResult.Errors = append(currentResult.Errors, result.Errors...)
 		currentResult.Stats.TotalLines += result.Stats.TotalLines
 		currentResult.Stats.SuccessLines += result.Stats.SuccessLines
 		currentResult.Stats.ErrorLines += result.Stats.ErrorLines
 
-		// Обновляем статистику по уровням и модулям
 		for level, count := range result.Stats.ByLevel {
 			currentResult.Stats.ByLevel[level] += count
 		}
