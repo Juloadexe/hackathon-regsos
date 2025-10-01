@@ -41,7 +41,7 @@
         </thead>
         <tbody>
             <tr v-for="value in logsStore.logsData.logs">
-                <td :style="{ color: getColor(value.Level) }">
+                <td :style="{ color: getColor(value.Level), backgroundColor: getBack(value.Level) }">
                     {{ value.Level }}
                 </td>
                 <td>
@@ -128,16 +128,31 @@ export default {
         function getColor(type) {
             switch(type) {
                 case 'info':
-                    return 'blue'
+                    return '#4E84A8'
                 case 'debug':
-                    return '#FFBF00'
+                    return '#837544'
                 case 'trace':
-                    return 'pink'
+                    return '#6b7280'
                 case 'error':
-                    return 'red'
+                    return '#A23038'
                 default:
                     return '#afa4a4';
             }
+        }
+
+        function getBack(type) {
+            switch (type) {
+                case 'info':
+                    return '#CCE8F4'
+                case 'debug':
+                    return '#F8F3D6'
+                case 'trace':
+                    return '#f9fafb'
+                case 'error':
+                    return '#EBC8C4'
+                default:
+                    return '#afa4a4';
+            }  
         }
 
         const formatTime = (timestamp) => {
@@ -168,6 +183,7 @@ export default {
             formatTime,
             applyFiters,
             getColor,
+            getBack,
         }
     }
 }
