@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -349,6 +350,47 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	displayWebResults(w, &result)
 }
+func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, limitStr string) []TerraformLog {
+	if len(logs) == 0 {
+		return logs
+	}
+
+	var filtered []TerraformLog
+
+	for _, log := range logs {
+		// Фильтр по уровню
+		if levelFilter != "" && !strings.EqualFold(log.Level, levelFilter) {
+			continue
+		}
+
+		// Фильтр по времени (с)
+		if sinceFilter != "" {
+			sinceTime, err := time.Parse(time.RFC3339, sinceFilter)
+			if err == nil && log.Timestamp.Before(sinceTime) {
+				continue
+			}
+		}
+
+		// Фильтр по времени (по)
+		if untilFilter != "" {
+			untilTime, err := time.Parse(time.RFC3339, untilFilter)
+			if err == nil && log.Timestamp.After(untilTime) {
+				continue
+			}
+		}
+
+		filtered = append(filtered, log)
+	}
+
+	// Применяем лимит
+	if limitStr != "" {
+		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 && limit < len(filtered) {
+			filtered = filtered[:limit]
+		}
+	}
+
+	return filtered
+}
 
 // Обработчик API для приема логов
 func handleAPILogs(w http.ResponseWriter, r *http.Request) {
@@ -363,12 +405,27 @@ func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+		query := r.URL.Query()
+		levelFilter := query.Get("level") // Фильтр по уровню
+		sinceFilter := query.Get("since") // Фильтр по времени (с)
+		untilFilter := query.Get("until") // Фильтр по времени (по)
+		limitStr := query.Get("limit")    // Лимит записей
+
+		// Фильтруем логи
+		filteredLogs := filterLogs(currentResult.Logs, levelFilter, sinceFilter, untilFilter, limitStr)
 
 		response := map[string]interface{}{
 			"status": "success",
 			"stats":  currentResult.Stats,
-			"logs":   currentResult.Logs,
-			"count":  len(currentResult.Logs),
+			"filters": map[string]interface{}{
+				"level": levelFilter,
+				"since": sinceFilter,
+				"until": untilFilter,
+				"limit": limitStr,
+			},
+			"logs":  filteredLogs,
+			"count": len(filteredLogs),
+			"total": len(currentResult.Logs),
 		}
 		json.NewEncoder(w).Encode(response)
 		return
