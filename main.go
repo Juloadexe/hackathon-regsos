@@ -15,7 +15,7 @@ import (
 var allowedOrigins = []string{
 	"http://localhost:3000",
 	"http://127.0.0.1:3000",
-	"http://localhost:5173", // замени на свой домен
+	"http://localhost:5173",
 }
 
 // Middleware для проверки CORS
@@ -35,7 +35,7 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		// Если источник разрешен, добавляем CORS заголовки
 		if allowed {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		}
@@ -353,6 +353,26 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 // Обработчик API для приема логов
 func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	// Обработка GET запроса - получение всех логов
+	if r.Method == "GET" {
+		if currentResult == nil {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "no_data",
+				"message": "Нет данных логов",
+				"logs":    []interface{}{},
+			})
+			return
+		}
+
+		response := map[string]interface{}{
+			"status": "success",
+			"stats":  currentResult.Stats,
+			"logs":   currentResult.Logs,
+			"count":  len(currentResult.Logs),
+		}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 
 	// Обработка DELETE запроса
 	if r.Method == "DELETE" {
