@@ -33,6 +33,7 @@ export default {
                 const name = file.name.split('.');
                 const extension = name[name.length - 1];
                 if (extension !== 'json') {
+                    selectedFile.value = null;
                     message.value = 'Неверное расширение файла. Выберете лог с расширением JSON';
                     return;
                 } else {
