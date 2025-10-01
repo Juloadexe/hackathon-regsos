@@ -15,7 +15,7 @@ flowchart LR
 ```mermaid
 flowchart LR
     subgraph Frontend [Веб-клиент]
-        A[/Vue приложение]
+        A[Vue приложение]
     end
     
     subgraph Backend [Бэкенд]
