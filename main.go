@@ -15,7 +15,7 @@ import (
 var allowedOrigins = []string{
 	"http://localhost:3000",
 	"http://127.0.0.1:3000",
-	"https://yourapp.com", // замени на свой домен
+	"http://localhost:5173", // замени на свой домен
 }
 
 // Middleware для проверки CORS
@@ -247,9 +247,9 @@ func getString(data map[string]interface{}, key string) string {
 func startWebServer(port string) {
 	http.HandleFunc("/", handleMain)
 	http.HandleFunc("/upload", handleUpload)
-	http.HandleFunc("/api/logs", handleAPILogs)     // POST для отправки логов
-	http.HandleFunc("/api/status", handleAPIStatus) // GET для получения статуса
-	http.HandleFunc("/api/clear", handleAPIClear)   // POST для очистки логов
+	http.HandleFunc("/api/logs", corsMiddleware(handleAPILogs))
+	http.HandleFunc("/api/status", corsMiddleware(handleAPIStatus))
+	http.HandleFunc("/api/clear", corsMiddleware(handleAPIClear))
 
 	fmt.Printf("🚀 Сервер запущен на http://localhost:%s\n", port)
 	fmt.Println("📊 Веб-интерфейс: http://localhost:" + port)

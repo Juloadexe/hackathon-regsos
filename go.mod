@@ -1,3 +1,3 @@
-module F/vscode_prjs/test_prj
+module terraform-log-parser
 
 go 1.25.0
