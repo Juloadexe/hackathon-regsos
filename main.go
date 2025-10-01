@@ -36,7 +36,7 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		// Если источник разрешен, добавляем CORS заголовки
 		if allowed {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		}
 
@@ -352,6 +352,20 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 
 // Обработчик API для приема логов
 func handleAPILogs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Обработка DELETE запроса
+	if r.Method == "DELETE" {
+		// Очищаем все логи
+		currentResult = nil
+
+		response := map[string]interface{}{
+			"status":  "success",
+			"message": "Все логи успешно очищены",
+		}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 	if r.Method != "POST" {
 		http.Error(w, `{"error": "Метод не поддерживается"}`, http.StatusMethodNotAllowed)
 		return
