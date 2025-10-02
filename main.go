@@ -350,7 +350,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	displayWebResults(w, &result)
 }
-func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, searchFilter, limitStr, moduleFilter string) []TerraformLog {
+func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, searchFilter, moduleFilter, limitStr string) []TerraformLog {
 	if len(logs) == 0 {
 		return logs
 	}
