@@ -5,7 +5,8 @@ export const Logs = defineStore('logs', {
     state: () => ({
         logsData: [],
         filter_logs: [],
-        url: 'http://localhost:8080/api'
+        uniqueModules: [],
+        url: 'http://localhost:8080/api',
     }),
     actions: {
         async uploadFile(file) {
@@ -18,7 +19,7 @@ export const Logs = defineStore('logs', {
                         'Content-Type': 'multipart/form-data'
                     }
                 })
-                this.getLogsData();
+                await this.getLogsData();
                 return response.data
             } catch (error) {
                 console.error('Ошибка загрузки файла:', error)
@@ -33,18 +34,23 @@ export const Logs = defineStore('logs', {
                     }
                 });
                 this.logsData = response.data;
-                
             } catch (error) {
-                console.error('Ошибка получения данных логов:', error)
-                throw error;
+                console.error('Ошибка получения данных логов:', error);
             }
         },
-
+        async getModules() {
+            this.uniqueModules = this.logsData.logs.map(log => log.Module);
+            this.uniqueModules = [...new Set(this.uniqueModules)];
+        },
         async setFiters(filters) {
             this.filter_logs = {
                 ...this.filter_logs,
                 ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v != null && v !== ''))
             }
+            await this.getLogsData();
+        },
+        async clearFilters() {
+            this.filter_logs = { level: '' };
             await this.getLogsData();
         },
         async clearLogs() {
@@ -53,7 +59,6 @@ export const Logs = defineStore('logs', {
                 return response;
             } catch (error) {
                 console.error('Ошибка удаления:', error)
-                // throw error;
             }
         }
     }
