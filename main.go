@@ -350,7 +350,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	displayWebResults(w, &result)
 }
-func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, searchFilter, limitStr string) []TerraformLog {
+func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, searchFilter, limitStr, moduleFilter string) []TerraformLog {
 	if len(logs) == 0 {
 		return logs
 	}
@@ -380,6 +380,12 @@ func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, sear
 		// Фильтр по уровню
 		if levelFilter != "" && !strings.EqualFold(log.Level, levelFilter) {
 			continue
+		}
+		// Фильтр по модулю (регистронезависимый)
+		if moduleFilter != "" {
+			if !strings.Contains(strings.ToLower(log.Module), strings.ToLower(moduleFilter)) {
+				continue
+			}
 		}
 
 		// Фильтр по времени (с)
@@ -459,10 +465,11 @@ func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 		sinceFilter := query.Get("since")   // Фильтр по времени (с)
 		untilFilter := query.Get("until")   // Фильтр по времени (по)
 		searchFilter := query.Get("search") // Поиск по сообщению
+		moduleFilter := query.Get("module") // Фильтр по модулю - ДОБАВЬ ЭТОТ ПАРАМЕТР
 		limitStr := query.Get("limit")      // Лимит записей
 
 		// Фильтруем логи
-		filteredLogs := filterLogs(currentResult.Logs, levelFilter, sinceFilter, untilFilter, searchFilter, limitStr)
+		filteredLogs := filterLogs(currentResult.Logs, levelFilter, sinceFilter, untilFilter, searchFilter, moduleFilter, limitStr)
 
 		response := map[string]interface{}{
 			"status": "success",
@@ -472,6 +479,7 @@ func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 				"since":  sinceFilter,
 				"until":  untilFilter,
 				"search": searchFilter,
+				"module": moduleFilter, // ДОБАВЬ В ОТВЕТ
 				"limit":  limitStr,
 			},
 			"logs":  filteredLogs,
