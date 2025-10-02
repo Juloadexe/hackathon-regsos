@@ -357,6 +357,25 @@ func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, sear
 
 	var filtered []TerraformLog
 
+	// Отладочная информация
+	if sinceFilter != "" {
+		sinceTime, err := parseTimeFlexible(sinceFilter)
+		if err != nil {
+			fmt.Printf("❌ Ошибка парсинга since фильтра '%s': %v\n", sinceFilter, err)
+		} else {
+			fmt.Printf("✅ since фильтр '%s' -> %v\n", sinceFilter, sinceTime)
+		}
+	}
+
+	if untilFilter != "" {
+		untilTime, err := parseTimeFlexible(untilFilter)
+		if err != nil {
+			fmt.Printf("❌ Ошибка парсинга until фильтра '%s': %v\n", untilFilter, err)
+		} else {
+			fmt.Printf("✅ until фильтр '%s' -> %v\n", untilFilter, untilTime)
+		}
+	}
+
 	for _, log := range logs {
 		// Фильтр по уровню
 		if levelFilter != "" && !strings.EqualFold(log.Level, levelFilter) {
@@ -396,16 +415,21 @@ func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, sear
 		}
 	}
 
+	fmt.Printf("📊 Фильтрация: из %d записей осталось %d\n", len(logs), len(filtered))
 	return filtered
 }
 
 func parseTimeFlexible(timeStr string) (time.Time, error) {
 	// Пробуем разные форматы
 	formats := []string{
-		time.RFC3339,       // "2006-01-02T15:04:05Z07:00"
-		"2006-01-02 15:04", // с пробелом, без секунд
-		"2006-01-02",       // только дата
-		"15:04:05",         // только время
+		time.RFC3339,          // "2006-01-02T15:04:05Z07:00"
+		"2006-01-02T15:04:05", // без временной зоны
+		"2006-01-02T15:04",    // с буквой T, без секунд - ДОБАВЬ ЭТОТ ФОРМАТ
+		"2006-01-02 15:04:05", // с пробелом вместо T
+		"2006-01-02 15:04",    // с пробелом, без секунд
+		"2006-01-02",          // только дата
+		"15:04:05",            // только время
+		"15:04",               // только время без секунд
 	}
 
 	for _, format := range formats {
