@@ -447,6 +447,36 @@ func parseTimeFlexible(timeStr string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("неверный формат времени: %s", timeStr)
 }
 
+// Функция для расчета статистики по отфильтрованным логам
+func calculateFilteredStats(logs []TerraformLog) ParseStats {
+	stats := ParseStats{
+		ByLevel:  make(map[string]int),
+		ByModule: make(map[string]int),
+	}
+
+	for _, log := range logs {
+		stats.TotalLines++
+		stats.SuccessLines++
+
+		// Считаем статистику по уровням
+		if log.Level != "" {
+			stats.ByLevel[log.Level]++
+		}
+
+		// Считаем статистику по модулям
+		if log.Module != "" {
+			stats.ByModule[log.Module]++
+		}
+
+		// Проверяем наличие HTTP запросов
+		if log.TfReqID != "" {
+			stats.HasHTTPRequests = true
+		}
+	}
+
+	return stats
+}
+
 // Обработчик API для приема логов
 func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -465,21 +495,25 @@ func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 		sinceFilter := query.Get("since")   // Фильтр по времени (с)
 		untilFilter := query.Get("until")   // Фильтр по времени (по)
 		searchFilter := query.Get("search") // Поиск по сообщению
-		moduleFilter := query.Get("module") // Фильтр по модулю - ДОБАВЬ ЭТОТ ПАРАМЕТР
+		moduleFilter := query.Get("module") // Фильтр по модулю
 		limitStr := query.Get("limit")      // Лимит записей
 
 		// Фильтруем логи
 		filteredLogs := filterLogs(currentResult.Logs, levelFilter, sinceFilter, untilFilter, searchFilter, moduleFilter, limitStr)
 
+		// Рассчитываем статистику по отфильтрованным логам
+		filteredStats := calculateFilteredStats(filteredLogs)
+
 		response := map[string]interface{}{
-			"status": "success",
-			"stats":  currentResult.Stats,
+			"status":         "success",
+			"stats":          filteredStats,       // Используем отфильтрованную статистику
+			"original_stats": currentResult.Stats, // Сохраняем оригинальную статистику для сравнения
 			"filters": map[string]interface{}{
 				"level":  levelFilter,
 				"since":  sinceFilter,
 				"until":  untilFilter,
 				"search": searchFilter,
-				"module": moduleFilter, // ДОБАВЬ В ОТВЕТ
+				"module": moduleFilter,
 				"limit":  limitStr,
 			},
 			"logs":  filteredLogs,
