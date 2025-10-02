@@ -1,0 +1,13 @@
+cat > .dockerignore << 'EOF'
+.git
+.gitignore
+README.md
+*.md
+Dockerfile*
+docker-compose*
+node_modules
+dist
+*.exe
+test.*
+docs/
+EOF
