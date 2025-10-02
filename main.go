@@ -350,7 +350,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	displayWebResults(w, &result)
 }
-func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, limitStr string) []TerraformLog {
+func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, searchFilter, limitStr string) []TerraformLog {
 	if len(logs) == 0 {
 		return logs
 	}
@@ -365,7 +365,7 @@ func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, limi
 
 		// Фильтр по времени (с)
 		if sinceFilter != "" {
-			sinceTime, err := time.Parse(time.RFC3339, sinceFilter)
+			sinceTime, err := parseTimeFlexible(sinceFilter)
 			if err == nil && log.Timestamp.Before(sinceTime) {
 				continue
 			}
@@ -373,8 +373,15 @@ func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, limi
 
 		// Фильтр по времени (по)
 		if untilFilter != "" {
-			untilTime, err := time.Parse(time.RFC3339, untilFilter)
+			untilTime, err := parseTimeFlexible(untilFilter)
 			if err == nil && log.Timestamp.After(untilTime) {
+				continue
+			}
+		}
+
+		// Поиск по сообщению (регистронезависимый)
+		if searchFilter != "" {
+			if !strings.Contains(strings.ToLower(log.Message), strings.ToLower(searchFilter)) {
 				continue
 			}
 		}
@@ -392,6 +399,24 @@ func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, limi
 	return filtered
 }
 
+func parseTimeFlexible(timeStr string) (time.Time, error) {
+	// Пробуем разные форматы
+	formats := []string{
+		time.RFC3339,       // "2006-01-02T15:04:05Z07:00"
+		"2006-01-02 15:04", // с пробелом, без секунд
+		"2006-01-02",       // только дата
+		"15:04:05",         // только время
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, timeStr); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("неверный формат времени: %s", timeStr)
+}
+
 // Обработчик API для приема логов
 func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -406,22 +431,24 @@ func handleAPILogs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		query := r.URL.Query()
-		levelFilter := query.Get("level") // Фильтр по уровню
-		sinceFilter := query.Get("since") // Фильтр по времени (с)
-		untilFilter := query.Get("until") // Фильтр по времени (по)
-		limitStr := query.Get("limit")    // Лимит записей
+		levelFilter := query.Get("level")   // Фильтр по уровню
+		sinceFilter := query.Get("since")   // Фильтр по времени (с)
+		untilFilter := query.Get("until")   // Фильтр по времени (по)
+		searchFilter := query.Get("search") // Поиск по сообщению
+		limitStr := query.Get("limit")      // Лимит записей
 
 		// Фильтруем логи
-		filteredLogs := filterLogs(currentResult.Logs, levelFilter, sinceFilter, untilFilter, limitStr)
+		filteredLogs := filterLogs(currentResult.Logs, levelFilter, sinceFilter, untilFilter, searchFilter, limitStr)
 
 		response := map[string]interface{}{
 			"status": "success",
 			"stats":  currentResult.Stats,
 			"filters": map[string]interface{}{
-				"level": levelFilter,
-				"since": sinceFilter,
-				"until": untilFilter,
-				"limit": limitStr,
+				"level":  levelFilter,
+				"since":  sinceFilter,
+				"until":  untilFilter,
+				"search": searchFilter,
+				"limit":  limitStr,
 			},
 			"logs":  filteredLogs,
 			"count": len(filteredLogs),
