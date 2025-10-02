@@ -383,7 +383,7 @@ func filterLogs(logs []TerraformLog, levelFilter, sinceFilter, untilFilter, sear
 		}
 		// Фильтр по модулю (регистронезависимый)
 		if moduleFilter != "" {
-			if !strings.Contains(strings.ToLower(log.Module), strings.ToLower(moduleFilter)) {
+			if !strings.EqualFold(log.Module, moduleFilter) {
 				continue
 			}
 		}
