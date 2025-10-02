@@ -264,6 +264,7 @@ export default {
         };
 
         onMounted(async () => {
+            document.title = 'Логи';
             await logsStore.getLogsData();
             await logsStore.getModules();
             updateChartData();
